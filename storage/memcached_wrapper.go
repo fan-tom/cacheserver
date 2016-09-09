@@ -25,7 +25,7 @@ type MCStorage struct {
 	client *memcache.Client
 }
 
-func NewMCStorage(sockets ...string) MCStorage {
+func NewMCStorage(sockets ...string) *MCStorage {
 	//var err error
 	log.Println("Connect to" + sockets[0])
 	conn, err := net.Dial("tcp", sockets[0])
@@ -36,7 +36,7 @@ func NewMCStorage(sockets ...string) MCStorage {
 	client := memcache.New(sockets...)
 	client.Add(&memcache.Item{Key: "counter",
 		Value: []byte("0")})
-	return MCStorage{client: client}
+	return &MCStorage{client: client}
 }
 func (storage *MCStorage) nextId() (uint64, error) {
 	return storage.client.Increment("counter", 1)

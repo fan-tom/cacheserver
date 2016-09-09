@@ -19,8 +19,8 @@ type RamStorage struct {
 	counter uint64
 }
 
-func NewRamStorage() RamStorage {
-	return RamStorage{dictionary: make(dictionary),
+func NewRamStorage() *RamStorage {
+	return &RamStorage{dictionary: make(dictionary),
 		counter: 0}
 }
 

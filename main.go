@@ -34,8 +34,8 @@ func config() (Storage, int) {
 
 	switch *st {
 	case "ram":
-		tmp := NewRamStorage()
-		storage = &tmp
+		storage= NewRamStorage()
+		//storage = tmp
 	default:
 		if *storage_server_addr == "" {
 			*storage_server_addr = os.Getenv("CACHSERVER_STORAGE_SOCKET")
@@ -47,11 +47,11 @@ func config() (Storage, int) {
 		switch *st {
 
 		case "redis":
-			tmp := NewRedisStorage(*storage_server_addr, password, 0)
-			storage = &tmp
+			storage= NewRedisStorage(*storage_server_addr, password, 0)
+			//storage = &tmp
 		case "memcached":
-			tmp := NewMCStorage(*storage_server_addr)
-			storage = &tmp
+			storage= NewMCStorage(*storage_server_addr)
+			//storage = &tmp
 		default:
 			panic("Wrong or empty storage specified: " + *st)
 		}

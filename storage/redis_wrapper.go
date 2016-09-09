@@ -28,8 +28,8 @@ func (storage *RedisStorage) nextId() (uint64, error) {
 	return id, err
 }
 
-func NewRedisStorage(addr string, password string, db int) RedisStorage {
-	return RedisStorage{client: redis.NewClient(&redis.Options{
+func NewRedisStorage(addr string, password string, db int) *RedisStorage {
+	return &RedisStorage{client: redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: password,
 		DB:       db,
