@@ -4,7 +4,8 @@ import (
 	"errors"
 	"strconv"
 	"time"
-	"unsafe"
+	//"unsafe"
+	"runtime"
 )
 
 type record struct {
@@ -30,7 +31,12 @@ func (storage *RamStorage) nextId() uint64 {
 
 //just utility
 func (storage *RamStorage) set(id uint64, data string, ttl time.Duration) {
-	timer := time.AfterFunc(ttl, func() { storage.Delete(id) })
+	var timer *time.Timer=nil
+	if ttl>0 {
+		timer = time.AfterFunc(ttl, func() {
+			storage.Delete(id)
+		})
+	}
 	storage.dictionary[id] = record{data: data, timer: timer}
 }
 
@@ -45,7 +51,7 @@ func (storage *RamStorage) Set(data string, ttl time.Duration) (uint64, error) {
 }
 
 func (storage *RamStorage) Update(id uint64, data string, ttl time.Duration) bool {
-	if _, ok := storage.dictionary[id]; ok {
+	if _, ok := storage.dictionary[id]; !ok {
 		return false
 	}
 	storage.set(id, data, ttl)
@@ -65,7 +71,10 @@ func (storage *RamStorage) GetMetric(metric Metric) (uint64, error) {
 	case CPU:
 		panic("CPU metric not implemented")
 	case RAM:
-		return uint64(unsafe.Sizeof(storage.dictionary)), nil
+		var memstats runtime.MemStats
+		runtime.ReadMemStats(&memstats)
+		return memstats.Alloc, nil
+		//return uint64(unsafe.Sizeof(storage.dictionary)), nil
 	case RPS:
 		panic("RPS metric not implemented")
 	default:
