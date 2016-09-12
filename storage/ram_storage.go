@@ -46,7 +46,9 @@ func (storage *RamStorage) Delete(id uint64) {
 	value,ok:=storage.dictionary[id]
 	if ok {
 		//stop timer to prevent future deletion that id
-		value.timer.Stop()
+		if value.timer!=nil {
+			value.timer.Stop()
+		}
 		delete(storage.dictionary, id)
 	}
 }
@@ -79,6 +81,8 @@ func (storage *RamStorage) GetMetric(metric Metric) (uint64, error) {
 		panic("CPU metric not implemented")
 	case RAM:
 		var memstats runtime.MemStats
+		//force garbage collection
+		runtime.GC()
 		runtime.ReadMemStats(&memstats)
 		return memstats.Alloc, nil
 		//return uint64(unsafe.Sizeof(storage.dictionary)), nil
