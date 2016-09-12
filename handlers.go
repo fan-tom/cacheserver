@@ -7,7 +7,24 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"log"
 )
+
+var rps chan uint64=make(chan uint64,1)
+
+func refresher()  {
+	log.Println("time")
+	rps<-0
+	for range time.Tick(time.Second) {
+		log.Println(<-rps)
+		rps <- 0
+	}
+}
+
+func incRps() {
+	prevRps :=<-rps
+	rps<- prevRps +1
+}
 
 type DataRecord struct {
 	Data string `json:"data"`
@@ -25,6 +42,7 @@ func getID(w http.ResponseWriter, params httprouter.Params) (uint64, bool) {
 }
 
 func getValue(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
+	defer incRps()
 	id, ok := getID(w, params)
 	if !ok {
 		return
@@ -40,6 +58,7 @@ func getValue(w http.ResponseWriter, _ *http.Request, params httprouter.Params) 
 }
 
 func setValue(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	defer incRps()
 	var rec DataRecord
 	err := json.NewDecoder(r.Body).Decode(&rec)
 	if err != nil {
@@ -54,9 +73,11 @@ func setValue(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 	w.Write([]byte(strconv.FormatUint(id, 10)))
+
 }
 
 func updateValue(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	defer incRps()
 	id, ok := getID(w, params)
 	if !ok {
 		return
@@ -70,17 +91,21 @@ func updateValue(w http.ResponseWriter, r *http.Request, params httprouter.Param
 	if !ok {
 		w.WriteHeader(404)
 	}
+
 }
 
 func deleteValue(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
+	defer incRps()
 	id, ok := getID(w, params)
 	if !ok {
 		return
 	}
 	storage.Delete(id)
+
 }
 
-func getMetric(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func getMetric(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
+	defer incRps()
 	metric := params.ByName("metric")
 	var value uint64
 	var err error
@@ -89,6 +114,11 @@ func getMetric(w http.ResponseWriter, r *http.Request, params httprouter.Params)
 		value, err = storage.GetMetric(RAM)
 	case "cpu":
 		value, err = storage.GetMetric(CPU)
+	case "rps":
+		//get current rps from channel
+		value, err=<-rps, nil
+		//...and push it back )))
+		rps<-value
 	default:
 		w.WriteHeader(400)
 		w.Write([]byte("Requested metric not implemented"))

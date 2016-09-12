@@ -5,9 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"log"
 	"os"
 	"strconv"
+	"log"
 )
 
 func config() (Storage, int) {
@@ -63,6 +63,7 @@ func config() (Storage, int) {
 
 var storage Storage
 
+
 func main() {
 	var port int
 	storage, port = config() //select storage
@@ -73,5 +74,6 @@ func main() {
 	router.PUT("/api/records/:id", updateValue)
 	router.DELETE("/api/records/:id", deleteValue)
 	server := NewServer(int32(port), router)
+	go refresher()
 	log.Fatal(server.ListenAndServe())
 }
