@@ -6,6 +6,7 @@ import (
 	"time"
 	//"unsafe"
 	"runtime"
+	//"log"
 )
 
 type record struct {
@@ -34,6 +35,7 @@ func (storage *RamStorage) set(id uint64, data string, ttl time.Duration) {
 	var timer *time.Timer=nil
 	if ttl>0 {
 		timer = time.AfterFunc(ttl, func() {
+			//log.Println("Deleting id:",id)
 			storage.Delete(id)
 		})
 	}
@@ -41,7 +43,12 @@ func (storage *RamStorage) set(id uint64, data string, ttl time.Duration) {
 }
 
 func (storage *RamStorage) Delete(id uint64) {
-	delete(storage.dictionary, id)
+	value,ok:=storage.dictionary[id]
+	if ok {
+		//stop timer to prevent future deletion that id
+		value.timer.Stop()
+		delete(storage.dictionary, id)
+	}
 }
 
 func (storage *RamStorage) Set(data string, ttl time.Duration) (uint64, error) {
